@@ -1,26 +1,301 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   Design tokens — Dr. Maya Reynolds
+     ink        #2d2d2d  deep charcoal, all body and heading text
+     cream      #f5f0e8  warm beige, the recurring soft section band
+     sage       #7c9a7e  primary; accent words, the footer strip
+     sageTint   #e8ede6  a light wash of the primary for "bright" bands
+     terracotta #c4714a  reserved for calls to action only
+   ------------------------------------------------------------------ */
+@theme {
+  --color-ink: #2d2d2d;
+  --color-cream: #f5f0e8;
+  --color-sage: #7c9a7e;
+  /* Darkened sage for small text and links: #7c9a7e only reaches ~3:1 on
+     cream, below the 4.5:1 AA threshold at body sizes. */
+  --color-sage-deep: #4f6b52;
+  --color-sage-tint: #e8ede6;
+  --color-terracotta: #c4714a;
+  --color-terracotta-deep: #a65c3a;
+  --color-rule: #ded5c6;
+
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+}
+
+/* ------------------------------------------------------------------
+   Fluid engine grid — a 1:1 reimplementation of Squarespace's layout
+   engine, which every section on the page is built on.
+
+   Mobile  (<768px): 8 content columns, gutter 6vw - 11px, rows min 24px
+   Desktop (>=768px): 24 content columns, gutter 5vw - 11px,
+                      row height = container-width * 0.0215
+   Both: 11px row/column gap, one flexible gutter column on each side.
+   ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fe-gap: 11px;
+  --fe-max-w: 1800px; /* maxPageWidth tweak */
+  --fe-container: min(var(--fe-max-w), calc(100vw - 5vw * 2));
+
+  /* Header geometry. The logo steps up at 768px and the vertical padding
+     switches from the mobile 6vw to the desktop 1.4vw at 800px. The hero
+     offsets itself by --header-h because the header overlays it. */
+  --logo-h: 70px;
+  --header-pad: 6vw;
+  --header-h: calc(var(--logo-h) + var(--header-pad) * 2);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 768px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --logo-h: 75px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (min-width: 800px) {
+  :root {
+    --header-pad: 1.4vw;
+  }
+}
+
+.fe {
+  /* The column gap is a per-section setting on the original (11px or 20px);
+     the row gap is always 11px. Both feed the gutter and cell widths. */
+  --fe-colgap: var(--fe-gap);
+  --fe-cols: 8;
+  --fe-gutter: calc(6vw - var(--fe-colgap));
+  --fe-cell: calc(
+    (var(--fe-max-w) - (var(--fe-colgap) * (var(--fe-cols) - 1))) /
+      var(--fe-cols)
+  );
+
+  display: grid;
+  position: relative;
+  column-gap: var(--fe-colgap);
+  row-gap: var(--fe-gap);
+  grid-template-columns:
+    minmax(var(--fe-gutter), 1fr)
+    repeat(var(--fe-cols), minmax(0, var(--fe-cell)))
+    minmax(var(--fe-gutter), 1fr);
+  grid-template-rows: repeat(var(--fe-rows-m), minmax(24px, auto));
+}
+
+@media (min-width: 768px) {
+  .fe {
+    --fe-cols: 24;
+    --fe-gutter: calc(5vw - var(--fe-colgap));
+    grid-template-rows: repeat(
+      var(--fe-rows-d),
+      minmax(calc(var(--fe-container) * 0.0215), auto)
+    );
+  }
+}
+
+.fe-block {
+  grid-area: var(--m);
+  position: relative;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .fe-block {
+    grid-area: var(--d);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Typography — sizes measured from the live site.
+   Below 768px Squarespace serves fixed sizes; at and above it the
+   scale is fluid: calc(15px + N * min(100vw, 1800px) / 100).
+   Line heights are ratios; tracking is -0.01em on every heading.
+   ------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: #fff;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: 43.08px;
+    line-height: 1.2544;
+  }
+  h2 {
+    font-size: 35.52px;
+    line-height: 1.2936;
+  }
+  h3 {
+    font-size: 30.12px;
+    line-height: 1.3216;
+  }
+  h4 {
+    font-size: 22.56px;
+    line-height: 1.3608;
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: calc(15px + 3.12 * min(100vw, 1800px) / 100);
+    }
+    h2 {
+      font-size: calc(15px + 2.28 * min(100vw, 1800px) / 100);
+    }
+    h3 {
+      font-size: calc(15px + 1.68 * min(100vw, 1800px) / 100);
+    }
+    h4 {
+      font-size: calc(15px + 0.84 * min(100vw, 1800px) / 100);
+    }
+  }
+
+  /* Body copy is larger than the 15px base: fixed below 768px, then fluid.
+     Line height is 1.8 throughout. Measured 16.08 / 15.92 / 16.728 / 17.16
+     at 390 / 768 / 1440 / 1920px. */
+  p {
+    font-size: 16.08px;
+    line-height: 1.8;
+    text-wrap: pretty;
+  }
+
+  @media (min-width: 768px) {
+    p {
+      font-size: calc(15px + 0.12 * min(100vw, 1800px) / 100);
+    }
+  }
+
+  h4 {
+    margin-bottom: 30px;
+  }
+}
+
+@layer components {
+  /* Rich-text flow. The original relies on collapsing block margins:
+     15px between paragraphs, 30px under an h4. Keeping these as margins
+     (rather than flex gaps) reproduces the collapse exactly. */
+  .rte > p {
+    margin-block: 15px;
+  }
+  .rte > h4 {
+    margin-bottom: 30px;
+  }
+  .rte > :first-child {
+    margin-top: 0;
+  }
+  .rte > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* .sqsrte-small — 0.9em of body copy. */
+  .t-small {
+    font-size: 14.472px;
+    line-height: 1.8;
+  }
+
+  @media (min-width: 768px) {
+    .t-small {
+      font-size: calc(0.9 * (15px + 0.12 * min(100vw, 1800px) / 100));
+    }
+  }
+
+  /* .sqsrte-large + strong em — a tracked uppercase eyebrow. Fixed at
+     15px/27px at every breakpoint on the original. */
+  .eyebrow {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.8;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* An emphasised run inside a heading: Playfair italic in the sage
+     primary, which carries the accent without a second display face. */
+  .script {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--color-sage);
+  }
+
+  /* Text CTA in terracotta: the rule retracts right-to-left on hover. */
+  .btn-underline {
+    position: relative;
+    display: inline-block;
+    padding: 9px 0;
+    font-family: var(--font-sans);
+    font-size: 12.408px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-terracotta);
+  }
+  .btn-underline::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-bottom: 1px solid currentColor;
+    transition: right 1s;
+  }
+  .btn-underline:hover::before {
+    right: 100%;
+  }
+
+  /* Solid terracotta CTA, keeping the original's oval silhouette. */
+  .btn-oval {
+    display: inline-block;
+    padding: 15px 22px;
+    border: 1px solid var(--color-terracotta);
+    border-radius: 100%;
+    background: var(--color-terracotta);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 12.408px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  .btn-oval:hover {
+    background: var(--color-terracotta-deep);
+    border-color: var(--color-terracotta-deep);
+  }
+
+  /* Nav link: rule grows from the left on hover (custom.css). */
+  .nav-link {
+    font-size: 13.272px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .nav-link::after {
+    display: block;
+    content: "";
+    background: currentColor;
+    height: 1px;
+    width: 0;
+    transition: width 0.5s;
+  }
+  .nav-link:hover::after {
+    width: 100%;
+  }
 }
